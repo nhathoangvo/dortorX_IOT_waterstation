@@ -9,6 +9,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include "config.h"   // WiFi credentials + API key (gitignored)
 
@@ -91,8 +92,10 @@ void postWater(int ml) {
   String body;
   serializeJson(doc, body);
 
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(SERVER_URL);
+  http.begin(client, SERVER_URL);
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(8000);
 

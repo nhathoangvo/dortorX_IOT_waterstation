@@ -8,8 +8,9 @@
 #define WIFI_SSID      "Ten_WiFi_cua_ban"
 #define WIFI_PASSWORD  "Mat_khau_WiFi"
 
-// IP máy tính đang chạy uvicorn (xem bằng ipconfig trên Windows)
-#define SERVER_URL     "http://192.168.x.x:8000/ingest/telemetry"
+// Local dev: "http://192.168.x.x:8000/ingest/telemetry"
+// Railway:   "https://web-production-388fe.up.railway.app/ingest/telemetry"
+#define SERVER_URL     "https://web-production-388fe.up.railway.app/ingest/telemetry"
 
 // Lấy device_id và api_key từ Dashboard → tab Devices
 #define DEVICE_ID      "water_station"
