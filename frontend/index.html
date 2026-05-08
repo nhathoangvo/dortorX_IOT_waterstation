@@ -373,7 +373,12 @@ document.getElementById('register-form').addEventListener('submit', async e => {
       body: JSON.stringify(body)
     });
     const data = await r.json();
-    if (!r.ok) return showMsg(data.detail || 'Đăng ký thất bại', 'error');
+    if (!r.ok) {
+      const msg = Array.isArray(data.detail)
+        ? data.detail.map(e => e.msg).join(' | ')
+        : (data.detail || 'Đăng ký thất bại');
+      return showMsg(msg, 'error');
+    }
     showMsg('Tài khoản đã được tạo! Đang chuyển hướng...', 'success');
     setTimeout(() => switchTab('login'), 1500);
   } catch { showMsg('Lỗi kết nối server', 'error'); }
