@@ -76,3 +76,14 @@ class PasswordResetToken(Base):
     token = Column(String, unique=True, index=True, nullable=False)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
+
+
+class FirmwareVersion(Base):
+    __tablename__ = "firmware_versions"
+
+    id           = Column(Integer, primary_key=True, index=True)
+    version      = Column(String, unique=True, nullable=False)
+    download_url = Column(String, nullable=False)
+    release_notes = Column(String, default="")
+    is_latest    = Column(Boolean, default=False, index=True)
+    created_at   = Column(DateTime, default=datetime.utcnow)

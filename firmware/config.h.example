@@ -4,13 +4,17 @@
 
 #pragma once
 
+// Phiên bản firmware hiện tại (cập nhật mỗi khi release)
+#define FIRMWARE_VERSION  "1.0.0"
+
 // WiFi của bạn
 #define WIFI_SSID      "Ten_WiFi_cua_ban"
 #define WIFI_PASSWORD  "Mat_khau_WiFi"
 
-// Local dev: "http://192.168.x.x:8000/ingest/telemetry"
-// Railway:   "https://web-production-388fe.up.railway.app/ingest/telemetry"
-#define SERVER_URL     "https://web-production-388fe.up.railway.app/ingest/telemetry"
+// URL server (Railway hoặc local dev)
+#define SERVER_BASE_URL   "https://web-production-388fe.up.railway.app"
+#define SERVER_URL        SERVER_BASE_URL "/ingest/telemetry"
+#define OTA_CHECK_URL     SERVER_BASE_URL "/firmware/check"
 
 // Lấy device_id và api_key từ Dashboard → tab Devices
 #define DEVICE_ID      "water_station"

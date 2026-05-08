@@ -164,6 +164,24 @@ class RoleUpdate(BaseModel):
         return v
 
 
+# ─── FIRMWARE ────────────────────────────────────────────
+class FirmwareCreate(BaseModel):
+    version: str = Field(min_length=1, max_length=32)
+    download_url: str = Field(min_length=1)
+    release_notes: str = ""
+
+
+class FirmwareOut(BaseModel):
+    id: int
+    version: str
+    download_url: str
+    release_notes: str
+    is_latest: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ─── NOTIFICATION ────────────────────────────────────────
 class NotificationOut(BaseModel):
     id: int
