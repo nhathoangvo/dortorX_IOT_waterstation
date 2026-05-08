@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor.X — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:       #050d1a;
+  --surface:  #0a1628;
+  --s2:       #0e1e36;
+  --border:   rgba(0,210,200,.12);
+  --accent:   #00d2c8;
+  --accent2:  #00aaff;
+  --a3:       #00e5a0;
+  --glow:     rgba(0,210,200,.3);
+  --text:     #e8f4f8;
+  --muted:    #5a7a90;
+  --danger:   #ff5c7a;
+  --warn:     #ffb347;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── BACKGROUND ── */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 15% 90%,rgba(0,210,200,.06) 0%,transparent 55%),
+             radial-gradient(ellipse 50% 70% at 85% 10%,rgba(0,170,255,.05) 0%,transparent 55%),
+             var(--bg);}
+.grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,210,200,.02) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,210,200,.02) 1px,transparent 1px);
+  background-size:60px 60px;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:220px;z-index:100;
+  background:rgba(5,13,26,.85);border-right:1px solid var(--border);
+  backdrop-filter:blur(20px);display:flex;flex-direction:column;padding:1.5rem 1rem;
+  transition:transform .3s;
+}
+.brand{display:flex;align-items:center;gap:.75rem;margin-bottom:2.5rem;padding:.5rem;}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+  box-shadow:0 0 20px var(--glow);}
+.brand-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;border-radius:10px;
+  cursor:pointer;color:var(--muted);font-size:.9rem;font-weight:500;transition:all .2s;
+  text-decoration:none;margin-bottom:.25rem;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.nav-item.active{color:var(--accent);background:rgba(0,210,200,.08);border:1px solid rgba(0,210,200,.12);}
+.nav-icon{font-size:1.1rem;width:20px;text-align:center;}
+.nav-section{font-size:.7rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;
+  padding:.5rem .9rem;margin:.5rem 0 .25rem;}
+
+.sidebar-bottom{margin-top:auto;}
+.user-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;
+  padding:.75rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;transition:all .2s;}
+.user-card:hover{border-color:var(--accent);}
+.avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--a3));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:#050d1a;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:.7rem;color:var(--muted);}
+
+/* ── MAIN ── */
+.main{margin-left:220px;min-height:100vh;padding:2rem;position:relative;z-index:1;padding-bottom:5rem;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;}
+.page-sub{color:var(--muted);font-size:.85rem;margin-top:.15rem;}
+.topbar-right{display:flex;align-items:center;gap:1rem;}
+.ws-badge{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted);
+  padding:.3rem .7rem;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid var(--border);}
+.ws-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:all .3s;}
+.ws-dot.live{background:var(--a3);box-shadow:0 0 8px var(--a3);}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:1.25rem 1.5rem;position:relative;overflow:hidden;transition:border-color .2s;}
+.stat-card::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,210,200,.03) 0%,transparent 60%);pointer-events:none;}
+.stat-card:hover{border-color:rgba(0,210,200,.3);}
+.stat-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;line-height:1;}
+.stat-value.accent{background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-sub{font-size:.78rem;color:var(--muted);margin-top:.35rem;}
+.stat-icon{position:absolute;right:1rem;top:1rem;font-size:1.8rem;opacity:.2;}
+
+/* ── GRID ── */
+.grid-main{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;margin-bottom:1.5rem;}
+.grid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;
+  position:relative;overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
+.card-badge{font-size:.7rem;padding:.2rem .6rem;border-radius:20px;font-weight:600;}
+.badge-live{background:rgba(0,229,160,.12);color:var(--a3);border:1px solid rgba(0,229,160,.2);}
+.badge-info{background:rgba(0,210,200,.1);color:var(--accent);border:1px solid rgba(0,210,200,.2);}
+
+/* ── CAMERA CARD ── */
+.cam-card{margin-top:1.5rem;padding:1.2rem;}
+.cam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
+.cam-controls{display:flex;gap:.4rem;align-items:center;}
+.cam-controls input{background:#0e1e36;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.35rem .6rem;width:130px;font-size:.82rem;outline:none;}
+.cam-controls input:focus{border-color:var(--accent);}
+.btn-cam{background:var(--accent);color:#050d1a;border:none;border-radius:8px;padding:.35rem .75rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:opacity .2s;}
+.btn-cam:hover{opacity:.85;}
+.btn-cam-off{background:#1e2a3a;color:var(--muted);border:1px solid var(--border);}
+.cam-body img{width:100%;border-radius:10px;background:#0a1628;min-height:200px;object-fit:cover;display:block;}
+#cam-status{color:var(--muted);font-size:.82rem;text-align:center;padding:1rem 0;margin:0;}
+
+/* ── PROGRESS CIRCLE ── */
+.progress-center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem 0;}
+.ring-wrap{position:relative;width:180px;height:180px;margin:0 auto 1.5rem;}
+.ring-svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.05);stroke-width:10;}
+.ring-fg{fill:none;stroke-width:10;stroke-linecap:round;
+  stroke:url(#ringGrad);transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;}
+.ring-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.ring-label{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
+.water-amount{font-family:'Syne',sans-serif;font-weight:700;font-size:1.5rem;text-align:center;}
+.water-target{font-size:.82rem;color:var(--muted);text-align:center;margin-top:.25rem;}
+.water-glasses{display:flex;align-items:center;justify-content:center;gap:.3rem;
+  margin-top:.75rem;font-size:.8rem;color:var(--muted);}
+
+/* ── SVG TREE ── */
+.plant-zone{display:flex;align-items:center;justify-content:center;flex:1;}
+/* ── PLANT HERO ── */
+.plant-hero{margin-bottom:1.5rem;}
+.plant-hero-body{display:flex;align-items:center;justify-content:space-between;gap:2rem;min-height:360px;}
+.plant-info-l,.plant-info-r{min-width:190px;display:flex;flex-direction:column;align-items:center;gap:.6rem;flex-shrink:0;}
+.hero-stat{text-align:center;padding:.65rem 1rem;background:rgba(0,210,200,.04);border:1px solid var(--border);border-radius:12px;width:100%;}
+.hero-stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;line-height:1;margin-bottom:.2rem;}
+.hero-stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.garden-link{color:var(--accent);font-size:.82rem;text-decoration:none;padding:.35rem .8rem;
+  border:1px solid rgba(0,210,200,.3);border-radius:8px;transition:all .2s;margin-top:.4rem;}
+.garden-link:hover{background:rgba(0,210,200,.08);}
+
+.tree-container{
+  animation:tree-breathe 4s ease-in-out infinite;
+  display:flex;align-items:center;justify-content:center;
+}
+@keyframes tree-breathe{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+
+/* SVG base styles */
+.tree-svg .trunk{
+  fill:none;stroke:#7a5c3a;stroke-width:14;stroke-linecap:round;stroke-linejoin:round;
+  transition:stroke .7s ease;
+}
+.tree-svg .branch-l1,.tree-svg .branch-r1{
+  fill:none;stroke:#7a5c3a;stroke-width:8;stroke-linecap:round;
+  transition:stroke .7s ease;
+}
+.tree-svg .branch-l2,.tree-svg .branch-r2,.tree-svg .branch-c{
+  fill:none;stroke:#7a5c3a;stroke-width:5;stroke-linecap:round;
+  transition:stroke .7s ease;
+}
+.tree-svg .branch-sub{
+  fill:none;stroke:#7a5c3a;stroke-width:3;stroke-linecap:round;
+  transition:stroke .7s ease;
+}
+.tree-svg .root-path{
+  fill:none;stroke:#5a3e22;stroke-width:4;stroke-linecap:round;opacity:.6;
+}
+.tree-svg .ground-shadow{fill:rgba(0,210,200,.08);}
+.tree-svg .soil{fill:rgba(80,55,30,.4);}
+
+.tree-svg .leaf-cluster{
+  transition:fill .9s ease, opacity .9s ease, transform .9s ease;
+  transform-box:fill-box;transform-origin:center;
+}
+.tree-svg .flower{
+  transition:opacity .5s ease, transform .5s ease;
+  transform-box:fill-box;transform-origin:center;
+  opacity:0;
+}
+.tree-svg .dead-leaf{
+  fill:#9b7a40;opacity:0;transition:opacity .7s ease;
+}
+
+/* ── STATE: DRY ── */
+.tree-container.tree-dry .trunk{stroke:#6b3a1f;}
+.tree-container.tree-dry .branch-l1,.tree-container.tree-dry .branch-r1{stroke:#6b3a1f;}
+.tree-container.tree-dry .branch-l2,.tree-container.tree-dry .branch-r2,.tree-container.tree-dry .branch-c{stroke:#6b3a1f;}
+.tree-container.tree-dry .branch-sub{stroke:#6b3a1f;}
+.tree-container.tree-dry .leaf-cluster{fill:#a07840;opacity:.45;}
+.tree-container.tree-dry .flower{opacity:0;}
+.tree-container.tree-dry .dead-leaf{opacity:1;}
+.tree-container.tree-dry .leaf-group{animation:none;}
+
+/* ── STATE: GROWING ── */
+.tree-container.tree-growing .trunk{stroke:#7a5c3a;}
+.tree-container.tree-growing .leaf-cluster{fill:#7bc47e;opacity:.85;}
+.tree-container.tree-growing .flower{opacity:0;}
+.tree-container.tree-growing .dead-leaf{opacity:0;}
+.tree-container.tree-growing .leaf-group-top{animation:sway-slow 5s ease-in-out infinite;}
+
+/* ── STATE: HEALTHY ── */
+.tree-container.tree-healthy .trunk{stroke:#8b6834;}
+.tree-container.tree-healthy .leaf-cluster{fill:#2ecc71;opacity:1;}
+.tree-container.tree-healthy .flower{opacity:0;}
+.tree-container.tree-healthy .dead-leaf{opacity:0;}
+.tree-container.tree-healthy .leaf-group{animation:sway-slow 3.5s ease-in-out infinite;}
+.tree-container.tree-healthy .leaf-group-ll{animation-delay:-.5s;}
+.tree-container.tree-healthy .leaf-group-rl{animation-delay:-.9s;}
+.tree-container.tree-healthy .leaf-group-lu{animation-delay:-.3s;}
+.tree-container.tree-healthy .leaf-group-ru{animation-delay:-.7s;}
+.tree-container.tree-healthy .leaf-group-top{animation-delay:-.1s;}
+
+/* ── STATE: BLOOM ── */
+.tree-container.tree-bloom .trunk{stroke:#9b7840;}
+.tree-container.tree-bloom .leaf-cluster{fill:#27ae60;opacity:1;}
+.tree-container.tree-bloom .flower{opacity:1;animation:flower-bloom .8s ease-out both;}
+.tree-container.tree-bloom .flower:nth-child(1){animation-delay:.0s;}
+.tree-container.tree-bloom .flower:nth-child(2){animation-delay:.08s;}
+.tree-container.tree-bloom .flower:nth-child(3){animation-delay:.16s;}
+.tree-container.tree-bloom .flower:nth-child(4){animation-delay:.12s;}
+.tree-container.tree-bloom .flower:nth-child(5){animation-delay:.04s;}
+.tree-container.tree-bloom .flower:nth-child(6){animation-delay:.20s;}
+.tree-container.tree-bloom .flower:nth-child(7){animation-delay:.24s;}
+.tree-container.tree-bloom .flower:nth-child(8){animation-delay:.10s;}
+.tree-container.tree-bloom .dead-leaf{opacity:0;}
+.tree-container.tree-bloom .leaf-group{animation:sway-slow 3s ease-in-out infinite;}
+.tree-container.tree-bloom .leaf-group-ll{animation-delay:-.4s;}
+.tree-container.tree-bloom .leaf-group-rl{animation-delay:-.8s;}
+.tree-container.tree-bloom .leaf-group-lu{animation-delay:-.2s;}
+.tree-container.tree-bloom .leaf-group-ru{animation-delay:-.6s;}
+
+@keyframes sway-slow{
+  0%,100%{transform:rotate(-2.5deg);}
+  50%{transform:rotate(2.5deg);}
+}
+@keyframes flower-bloom{
+  0%{opacity:0;transform:scale(0);}
+  65%{transform:scale(1.25);}
+  100%{opacity:1;transform:scale(1);}
+}
+
+.plant-state-badge{font-size:.75rem;padding:.25rem .8rem;border-radius:20px;font-weight:600;margin-bottom:.4rem;margin-top:.5rem;}
+.state-dry{background:rgba(255,92,122,.1);color:var(--danger);border:1px solid rgba(255,92,122,.2);}
+.state-growing{background:rgba(255,179,71,.1);color:var(--warn);border:1px solid rgba(255,179,71,.2);}
+.state-healthy{background:rgba(0,210,200,.1);color:var(--accent);border:1px solid rgba(0,210,200,.2);}
+.state-bloom{background:rgba(0,229,160,.1);color:var(--a3);border:1px solid rgba(0,229,160,.2);}
+.plant-msg{font-size:.8rem;color:var(--muted);text-align:center;max-width:220px;line-height:1.4;}
+
+/* ── 7-DAY / HOURLY CHART ── */
+.chart-wrap{position:relative;height:200px;}
+.hourly-wrap{position:relative;height:180px;}
+
+/* ── DEVICES ── */
+.device-list{display:flex;flex-direction:column;gap:.75rem;max-height:260px;overflow-y:auto;}
+.device-list::-webkit-scrollbar{width:4px;}
+.device-list::-webkit-scrollbar-track{background:transparent;}
+.device-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.device-item{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;transition:all .2s;}
+.device-item:hover{border-color:rgba(0,210,200,.2);background:rgba(0,210,200,.03);}
+.device-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.device-dot.online{background:var(--a3);box-shadow:0 0 8px var(--a3);}
+.device-dot.offline{background:var(--muted);}
+.device-info{flex:1;min-width:0;}
+.device-name{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.device-id{font-size:.72rem;color:var(--muted);}
+.device-key{font-size:.68rem;color:var(--muted);font-family:monospace;margin-top:.1rem;}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:6px;
+  padding:.2rem .5rem;font-size:.7rem;color:var(--muted);cursor:pointer;transition:all .2s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── ADD DEVICE ── */
+.add-device-form{display:flex;flex-direction:column;gap:.75rem;margin-top:1rem;
+  padding-top:1rem;border-top:1px solid var(--border);}
+.input-row{display:flex;gap:.5rem;}
+.mini-input{flex:1;padding:.55rem .75rem;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:8px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s;}
+.mini-input:focus{border-color:var(--accent);}
+.mini-input::placeholder{color:var(--muted);opacity:.6;}
+.mini-btn{padding:.55rem 1rem;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:8px;color:#050d1a;font-weight:700;font-size:.82rem;
+  cursor:pointer;white-space:nowrap;transition:opacity .2s;}
+.mini-btn:hover{opacity:.88;}
+
+/* ── STREAK ── */
+.streak-row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.75rem;}
+.streak-day{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:.7rem;font-weight:600;border:1px solid var(--border);}
+.streak-day.done{background:linear-gradient(135deg,var(--accent),var(--a3));color:#050d1a;border-color:transparent;}
+.streak-day.today{border-color:var(--accent);color:var(--accent);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){.grid-main{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.main{margin-left:0}
+  .stats-row{grid-template-columns:1fr 1fr}.grid-bottom{grid-template-columns:1fr}
+  .video-widget{left:1rem;}
+}
+
+/* ── ANIMATIONS ── */
+.card{animation:fade-in .5s ease both;}
+@keyframes fade-in{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card:nth-child(1){animation-delay:.05s}
+.card:nth-child(2){animation-delay:.1s}
+.card:nth-child(3){animation-delay:.15s}
+
+/* ── LOGOUT ── */
+.logout-btn{display:flex;align-items:center;gap:.5rem;padding:.55rem .9rem;
+  border-radius:8px;background:none;border:1px solid rgba(255,92,122,.2);
+  color:var(--danger);font-size:.82rem;cursor:pointer;transition:all .2s;width:100%;margin-top:.5rem;}
+.logout-btn:hover{background:rgba(255,92,122,.08);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:.75rem 1rem;font-size:.85rem;display:flex;align-items:center;gap:.5rem;
+  transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,229,160,.3);}
+.toast.error{border-color:rgba(255,92,122,.3);}
+
+/* ── VIDEO STREAM WIDGET ── */
+.video-widget{
+  position:fixed;left:240px;bottom:1.5rem;z-index:200;
+  width:272px;height:168px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px var(--border);
+  transition:opacity .3s,transform .3s;
+}
+.video-widget.hidden{opacity:0;pointer-events:none;transform:translateY(12px);}
+.video-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:.4rem .75rem;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);flex-shrink:0;}
+.video-hdr-left{display:flex;align-items:center;gap:.45rem;}
+.video-dot-red{width:7px;height:7px;border-radius:50%;background:#ff5c7a;}
+.video-hdr-title{font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.video-close{background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:.9rem;line-height:1;padding:.1rem .3rem;transition:color .2s;border-radius:4px;}
+.video-close:hover{color:var(--text);background:rgba(255,255,255,.06);}
+.video-body{flex:1;background:#000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.4rem;position:relative;}
+.video-body video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+.video-placeholder-icon{font-size:1.8rem;opacity:.35;}
+.video-placeholder-text{font-size:.72rem;color:var(--muted);}
+
+/* ── VIDEO TOGGLE BTN ── */
+.video-toggle{
+  position:fixed;left:240px;bottom:1.5rem;z-index:201;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:.4rem .75rem;font-size:.76rem;color:var(--muted);cursor:pointer;
+  display:none;align-items:center;gap:.4rem;transition:all .2s;
+}
+.video-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.video-toggle.visible{display:flex;}
+
+/* ── PROFILE MODAL ── */
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:2rem;width:100%;max-width:420px;position:relative;
+  transform:translateY(20px) scale(.97);transition:transform .3s;
+  box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(0,210,200,.05);}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1.5rem;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;
+  color:var(--muted);font-size:1.4rem;cursor:pointer;transition:color .2s;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.form-group{margin-bottom:1rem;}
+.form-label{display:block;font-size:.78rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:.4rem;}
+.form-input{width:100%;padding:.65rem .85rem;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--accent);}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='%235a7a90'%3E%3Cpath d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .8rem center;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.5rem;}
+.btn-primary{flex:1;padding:.7rem 1rem;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:10px;color:#050d1a;font-weight:700;font-size:.9rem;
+  cursor:pointer;transition:opacity .2s;font-family:'DM Sans',sans-serif;}
+.btn-primary:hover{opacity:.88;}
+.btn-secondary{padding:.7rem 1.2rem;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:.9rem;
+  cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.btn-secondary:hover{border-color:var(--accent);color:var(--text);}
+.modal-divider{height:1px;background:var(--border);margin:1rem 0;}
+.modal-email{font-size:.82rem;color:var(--muted);margin-bottom:.25rem;}
+
+/* ── EXPORT BTN ── */
+.btn-export{padding:.3rem .85rem;background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);
+  border-radius:20px;color:var(--a3);font-size:.78rem;cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif;}
+.btn-export:hover{background:rgba(0,229,160,.14);}
+
+/* ── NOTIFICATION BELL ── */
+.notif-wrap{position:relative;}
+.notif-bell{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted);
+  padding:.3rem .7rem;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  cursor:pointer;transition:all .2s;user-select:none;}
+.notif-bell:hover{border-color:rgba(0,210,200,.3);color:var(--text);}
+.notif-badge{background:var(--danger);color:#fff;border-radius:50%;
+  width:16px;height:16px;font-size:.6rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-left:.1rem;}
+.notif-dropdown{position:absolute;top:calc(100% + .5rem);right:0;width:300px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:400;display:none;overflow:hidden;}
+.notif-dropdown.open{display:block;}
+.notif-header{display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1rem;border-bottom:1px solid var(--border);}
+.notif-ttl{font-weight:700;font-size:.85rem;}
+.notif-clear{font-size:.75rem;color:var(--accent);cursor:pointer;background:none;border:none;
+  font-family:'DM Sans',sans-serif;padding:0;}
+.notif-list{max-height:280px;overflow-y:auto;}
+.notif-item{padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:rgba(255,255,255,.02);}
+.notif-item.unread{border-left:2px solid var(--accent);padding-left:calc(1rem - 2px);}
+.notif-msg{font-size:.82rem;line-height:1.4;}
+.notif-time{font-size:.7rem;color:var(--muted);margin-top:.2rem;}
+.notif-empty{padding:1.5rem;text-align:center;color:var(--muted);font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<div class="bg-fx"></div>
+<div class="grid-lines"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- VIDEO STREAM WIDGET -->
+<div class="video-widget" id="video-widget">
+  <div class="video-hdr">
+    <div class="video-hdr-left">
+      <div class="video-dot-red"></div>
+      <span class="video-hdr-title">Camera Live</span>
+    </div>
+    <button class="video-close" onclick="hideVideoWidget()" title="Ẩn">×</button>
+  </div>
+  <div class="video-body">
+    <video id="live-video" autoplay muted playsinline></video>
+    <div class="video-placeholder-icon">📹</div>
+    <div class="video-placeholder-text">Stream chưa kết nối</div>
+  </div>
+</div>
+<button class="video-toggle" id="video-toggle" onclick="showVideoWidget()">📹 Camera</button>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Hồ sơ cá nhân</div>
+    <div class="modal-email" id="modal-email">—</div>
+    <div class="modal-divider"></div>
+    <div class="form-group">
+      <label class="form-label">Họ và tên</label>
+      <input class="form-input" id="pf-name" type="text" placeholder="Nhập họ tên...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Giới tính</label>
+      <select class="form-input form-select" id="pf-gender">
+        <option value="male">Nam ♂</option>
+        <option value="female">Nữ ♀</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cân nặng (kg)</label>
+        <input class="form-input" id="pf-weight" type="number" min="30" max="200" step=".1" placeholder="65">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chiều cao (cm)</label>
+        <input class="form-input" id="pf-height" type="number" min="100" max="250" step=".1" placeholder="170">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveProfile()">Lưu thay đổi</button>
+      <button class="btn-secondary" onclick="closeModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="brand">
+    <div class="brand-icon">💧</div>
+    <span class="brand-name">Doctor.X</span>
+  </div>
+
+  <span class="nav-section">Menu</span>
+  <a class="nav-item active" href="/dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+  <a class="nav-item" href="/garden"><span class="nav-icon">🌱</span> Vườn cây</a>
+
+  <span class="nav-section">Tài khoản</span>
+  <a class="nav-item" href="#" id="profile-link" onclick="openProfileModal(); return false;"><span class="nav-icon">👤</span> Hồ sơ</a>
+  <a class="nav-item" id="admin-nav" href="/admin-panel" style="display:none"><span class="nav-icon">⚙</span> Admin</a>
+
+  <div class="sidebar-bottom">
+    <div class="user-card" id="user-card" onclick="openProfileModal()">
+      <div class="avatar" id="avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Loading...</div>
+        <div class="user-role" id="user-role">—</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">🚪 Đăng xuất</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="date-label">—</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+      <div class="notif-wrap">
+        <div class="notif-bell" onclick="toggleNotifDropdown()">
+          🔔 <span class="notif-badge" id="notif-count" style="display:none">0</span>
+        </div>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-header">
+            <span class="notif-ttl">Thông báo</span>
+            <button class="notif-clear" onclick="markAllRead()">Đọc tất cả</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">Không có thông báo</div>
+          </div>
+        </div>
+      </div>
+      <div class="ws-badge">
+        <div class="ws-dot" id="ws-dot"></div>
+        <span id="ws-label">Đang kết nối…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Đã uống hôm nay</div>
+      <div class="stat-value accent" id="s-total">—</div>
+      <div class="stat-sub">ml</div>
+      <div class="stat-icon">💧</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Mục tiêu</div>
+      <div class="stat-value" id="s-target">—</div>
+      <div class="stat-sub">ml / ngày</div>
+      <div class="stat-icon">🎯</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Số ly</div>
+      <div class="stat-value accent" id="s-glasses">—</div>
+      <div class="stat-sub">ly (250ml)</div>
+      <div class="stat-icon">🥛</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Chuỗi ngày</div>
+      <div class="stat-value" id="s-streak">—</div>
+      <div class="stat-sub">ngày liên tiếp 🔥</div>
+      <div class="stat-icon">🔥</div>
+    </div>
+  </div>
+
+  <!-- PLANT HERO -->
+  <div class="card plant-hero">
+    <div class="card-header">
+      <span class="card-title">Vườn cây Doctor.X</span>
+      <span class="card-badge badge-live" id="plant-badge">—</span>
+    </div>
+    <div class="plant-hero-body">
+      <div class="plant-info-l">
+        <div class="plant-state-badge" id="plant-badge-state">—</div>
+        <div class="plant-msg" id="plant-msg">—</div>
+        <a href="/garden" class="garden-link">🌿 Xem vườn cây</a>
+      </div>
+      <div class="plant-zone">
+        <div class="tree-container tree-dry" id="tree-container">
+          <svg class="tree-svg" viewBox="0 0 300 320" width="360" height="384">
+            <ellipse class="ground-shadow" cx="150" cy="308" rx="70" ry="10"/>
+            <path class="soil" d="M100 305 Q150 295 200 305 Q185 312 150 314 Q115 312 100 305Z"/>
+            <path class="root-path" d="M148 300 C135 305 115 312 95 310"/>
+            <path class="root-path" d="M152 300 C165 305 185 312 205 310"/>
+            <path class="root-path" d="M145 302 C130 308 112 318 98 316"/>
+            <path class="root-path" d="M155 302 C170 308 188 318 202 316"/>
+            <path class="trunk" d="M145 300 C143 278 138 255 142 232 C146 209 140 186 145 163 C150 140 144 117 148 95"/>
+            <path class="branch-l1" d="M143 240 C120 228 96 215 72 206"/>
+            <path class="branch-r1" d="M147 232 C170 220 194 208 218 200"/>
+            <path class="branch-l2" d="M145 195 C124 181 104 167 82 156"/>
+            <path class="branch-r2" d="M147 188 C168 174 188 160 210 150"/>
+            <path class="branch-c"  d="M148 155 C146 136 144 117 148 98"/>
+            <path class="branch-sub" d="M72 206 C56 198 44 186 36 175"/>
+            <path class="branch-sub" d="M72 206 C62 194 58 180 62 168"/>
+            <path class="branch-sub" d="M218 200 C232 192 244 180 252 168"/>
+            <path class="branch-sub" d="M218 200 C226 188 224 174 218 163"/>
+            <path class="branch-sub" d="M82 156 C68 146 56 132 50 118"/>
+            <path class="branch-sub" d="M82 156 C76 142 78 126 86 114"/>
+            <path class="branch-sub" d="M210 150 C222 140 232 126 236 112"/>
+            <path class="branch-sub" d="M210 150 C216 136 212 120 204 110"/>
+            <g class="leaf-group leaf-group-fll" style="transform-origin:46px 172px">
+              <ellipse class="leaf-cluster" cx="36" cy="168" rx="30" ry="22"/>
+              <ellipse class="leaf-cluster" cx="54" cy="155" rx="24" ry="18"/>
+              <ellipse class="leaf-cluster" cx="22" cy="155" rx="20" ry="16"/>
+            </g>
+            <g class="leaf-group leaf-group-ll" style="transform-origin:80px 210px">
+              <ellipse class="leaf-cluster" cx="72" cy="202" rx="32" ry="24"/>
+              <ellipse class="leaf-cluster" cx="94" cy="192" rx="26" ry="19"/>
+              <ellipse class="leaf-cluster" cx="58" cy="192" rx="22" ry="17"/>
+            </g>
+            <g class="leaf-group leaf-group-rl" style="transform-origin:220px 204px">
+              <ellipse class="leaf-cluster" cx="228" cy="196" rx="32" ry="24"/>
+              <ellipse class="leaf-cluster" cx="208" cy="188" rx="26" ry="19"/>
+              <ellipse class="leaf-cluster" cx="242" cy="184" rx="22" ry="17"/>
+            </g>
+            <g class="leaf-group leaf-group-frl" style="transform-origin:250px 170px">
+              <ellipse class="leaf-cluster" cx="256" cy="164" rx="30" ry="22"/>
+              <ellipse class="leaf-cluster" cx="238" cy="153" rx="24" ry="18"/>
+              <ellipse class="leaf-cluster" cx="268" cy="153" rx="20" ry="16"/>
+            </g>
+            <g class="leaf-group leaf-group-lu" style="transform-origin:82px 152px">
+              <ellipse class="leaf-cluster" cx="70" cy="140" rx="28" ry="20"/>
+              <ellipse class="leaf-cluster" cx="90" cy="128" rx="22" ry="17"/>
+              <ellipse class="leaf-cluster" cx="56" cy="128" rx="19" ry="15"/>
+            </g>
+            <g class="leaf-group leaf-group-ru" style="transform-origin:212px 148px">
+              <ellipse class="leaf-cluster" cx="220" cy="136" rx="28" ry="20"/>
+              <ellipse class="leaf-cluster" cx="200" cy="124" rx="22" ry="17"/>
+              <ellipse class="leaf-cluster" cx="234" cy="124" rx="19" ry="15"/>
+            </g>
+            <g class="leaf-group leaf-group-top" style="transform-origin:148px 96px">
+              <ellipse class="leaf-cluster" cx="148" cy="88" rx="36" ry="27"/>
+              <ellipse class="leaf-cluster" cx="126" cy="102" rx="26" ry="19"/>
+              <ellipse class="leaf-cluster" cx="170" cy="102" rx="26" ry="19"/>
+              <ellipse class="leaf-cluster" cx="148" cy="66" rx="24" ry="18"/>
+            </g>
+            <g class="flower-group">
+              <circle class="flower" cx="24"  cy="160" r="7"   fill="#FFB7C5"/>
+              <circle class="flower" cx="50"  cy="146" r="5.5" fill="#00e5a0"/>
+              <circle class="flower" cx="260" cy="156" r="7"   fill="#FFB7C5"/>
+              <circle class="flower" cx="234" cy="144" r="5.5" fill="#00e5a0"/>
+              <circle class="flower" cx="58"  cy="122" r="6"   fill="#FFB7C5"/>
+              <circle class="flower" cx="226" cy="116" r="6"   fill="#00e5a0"/>
+              <circle class="flower" cx="148" cy="54"  r="8"   fill="#FFB7C5"/>
+              <circle class="flower" cx="128" cy="68"  r="5.5" fill="#00e5a0"/>
+              <circle class="flower" cx="168" cy="68"  r="5.5" fill="#FFB7C5"/>
+            </g>
+            <g class="dry-leaves">
+              <ellipse class="dead-leaf" cx="110" cy="292" rx="7"   ry="3.5" transform="rotate(-25 110 292)"/>
+              <ellipse class="dead-leaf" cx="190" cy="288" rx="6"   ry="3"   transform="rotate(20 190 288)"/>
+              <ellipse class="dead-leaf" cx="130" cy="298" rx="5"   ry="2.5" transform="rotate(-10 130 298)"/>
+              <ellipse class="dead-leaf" cx="172" cy="295" rx="5.5" ry="2.8" transform="rotate(15 172 295)"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="plant-info-r">
+        <div class="hero-stat">
+          <div class="hero-stat-val accent" id="hero-ml">—</div>
+          <div class="hero-stat-lbl">ml uống hôm nay</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val" id="hero-pct-display">—</div>
+          <div class="hero-stat-lbl">% hoàn thành</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val" id="hero-glasses-display">—</div>
+          <div class="hero-stat-lbl">ly (250ml)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid-main">
+    <!-- Progress + 7 day chart -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem;">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Tiến độ hôm nay</span>
+          <span class="card-badge badge-live" id="realtime-badge">● LIVE</span>
+        </div>
+        <div class="progress-center">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 180 180" width="180" height="180">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00d2c8"/>
+                  <stop offset="100%" stop-color="#00aaff"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="90" cy="90" r="80"/>
+              <circle class="ring-fg" id="ring-fg" cx="90" cy="90" r="80"
+                stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-pct" id="ring-pct">0%</div>
+              <div class="ring-label" id="ring-slot">—</div>
+            </div>
+          </div>
+          <div class="water-amount" id="water-amount">0 ml</div>
+          <div class="water-target" id="water-target">Mục tiêu: — ml</div>
+          <div class="water-glasses" id="water-glasses">🥛 0 ly</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">7 ngày gần đây</span>
+          <span class="card-badge badge-info">% hoàn thành</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart-7day"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Devices -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Thiết bị</span>
+        <span class="card-badge badge-info" id="device-count">0</span>
+      </div>
+      <div class="device-list" id="device-list">
+        <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem;">Đang tải...</div>
+      </div>
+      <div class="add-device-form">
+        <div class="input-row">
+          <input class="mini-input" id="new-dev-id" placeholder="device_id">
+          <input class="mini-input" id="new-dev-name" placeholder="Tên thiết bị">
+        </div>
+        <button class="mini-btn" onclick="addDevice()">+ Thêm thiết bị</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="grid-bottom">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Lịch uống theo giờ</span>
+        <span class="card-badge badge-info">Hôm nay</span>
+      </div>
+      <div class="hourly-wrap">
+        <canvas id="chart-hourly"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Thành tích 7 ngày</span>
+        <span class="card-badge badge-info" id="streak-label">—</span>
+      </div>
+      <div class="streak-row" id="streak-row"></div>
+      <div style="margin-top:1rem;font-size:.8rem;color:var(--muted);text-align:center;" id="streak-summary">—</div>
+    </div>
+  </div>
+
+  <!-- CAMERA LIVE (WebSocket relay) -->
+  <div class="card cam-card">
+    <div class="cam-header">
+      <span>📷 Camera Live</span>
+      <div class="cam-controls">
+        <button class="btn-cam" onclick="connectCam()">Bật Camera</button>
+        <button class="btn-cam btn-cam-off" onclick="disconnectCam()">Ngắt</button>
+      </div>
+    </div>
+    <div class="cam-body">
+      <img id="cam-feed" alt="" />
+      <p id="cam-status">Nhấn "Bật Camera" để bắt đầu.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── SECURITY HELPERS ───────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── STATE ──────────────────────────────────────────────
+const API = '';
+let token = localStorage.getItem('token');
+let ws = null;
+let chart7day = null;
+let chartHourly = null;
+let dashData = null;
+
+// ── INIT ──────────────────────────────────────────────
+if (!token) { window.location.href = '/app'; }
+
+document.getElementById('date-label').textContent = new Date().toLocaleDateString('vi-VN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+async function apiFetch(path, opts={}) {
+  const r = await fetch(API + path, {
+    ...opts,
+    headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers||{})}
+  });
+  if (r.status === 401) { logout(); return null; }
+  return r;
+}
+
+// ── LOAD PROFILE ──────────────────────────────────────
+async function loadProfile() {
+  const r = await apiFetch('/me/profile');
+  if (!r) return;
+  const u = await r.json();
+  document.getElementById('user-name').textContent = u.full_name || u.email;
+  document.getElementById('user-role').textContent = u.gender === 'male' ? '♂ Nam' : '♀ Nữ';
+  const init = (u.full_name || u.email).charAt(0).toUpperCase();
+  document.getElementById('avatar').textContent = init;
+  if (u.role === 'admin') document.getElementById('admin-nav').style.display = 'flex';
+}
+
+// ── LOAD DASHBOARD ─────────────────────────────────────
+async function loadDashboard() {
+  const r = await apiFetch('/me/water/dashboard');
+  if (!r) return;
+  dashData = await r.json();
+  renderDashboard(dashData);
+}
+
+function renderDashboard(data) {
+  const today = data.today;
+  updateWaterStats(today);
+  updatePlant(today);
+  renderDevices(data.devices);
+  render7DayChart(data.last_7_days);
+  renderHourlyChart(data.hourly_today);
+  renderStreak(data.last_7_days, today.streak_days);
+}
+
+function updateWaterStats(today) {
+  const pct = Math.round(today.percent);
+  document.getElementById('s-total').textContent = Math.round(today.total_ml).toLocaleString();
+  document.getElementById('s-target').textContent = Math.round(today.target_ml).toLocaleString();
+  document.getElementById('s-glasses').textContent = today.glasses;
+  document.getElementById('s-streak').textContent = today.streak_days;
+
+  document.getElementById('water-amount').textContent = Math.round(today.total_ml).toLocaleString() + ' ml';
+  document.getElementById('water-target').textContent = 'Mục tiêu: ' + Math.round(today.target_ml).toLocaleString() + ' ml';
+  document.getElementById('water-glasses').innerHTML = '🥛 ' + today.glasses + ' ly';
+  document.getElementById('ring-pct').textContent = pct + '%';
+  document.getElementById('ring-slot').textContent = slotLabel(today.time_slot);
+
+  const circ = 2 * Math.PI * 80;
+  const offset = circ * (1 - pct / 100);
+  document.getElementById('ring-fg').style.strokeDashoffset = offset;
+
+  document.getElementById('hero-ml').textContent = Math.round(today.total_ml).toLocaleString();
+  document.getElementById('hero-pct-display').textContent = pct + '%';
+  document.getElementById('hero-glasses-display').textContent = today.glasses;
+  checkDailyReminder(pct);
+}
+
+function slotLabel(s) {
+  return {morning:'☀️ Buổi sáng', lunch:'🌤 Buổi trưa', afternoon:'🌥 Buổi chiều', night:'🌙 Buổi tối'}[s] || s;
+}
+
+function updatePlant(today) {
+  const states = {
+    dry:     {treeCls:'tree-dry',     label:'Đang khô',  cls:'state-dry',     msg:'Cây đang khát nước! Hãy uống ngay 💧'},
+    growing: {treeCls:'tree-growing', label:'Đang lớn',  cls:'state-growing', msg:'Tốt lắm! Cây đang phát triển 🌿'},
+    healthy: {treeCls:'tree-healthy', label:'Khỏe mạnh', cls:'state-healthy', msg:'Cây đang rất khỏe! Tiếp tục nào 💪'},
+    bloom:   {treeCls:'tree-bloom',   label:'Nở rộ',     cls:'state-bloom',   msg:'Xuất sắc! Cây nở rộ, bạn đã đạt mục tiêu 🎉'},
+  };
+  const s = states[today.plant_state] || states.dry;
+
+  const tc = document.getElementById('tree-container');
+  tc.className = 'tree-container ' + s.treeCls;
+
+  const badge = document.getElementById('plant-badge-state');
+  badge.textContent = s.label;
+  badge.className = 'plant-state-badge ' + s.cls;
+  document.getElementById('plant-badge').textContent = s.label;
+  document.getElementById('plant-msg').textContent = s.msg;
+}
+
+function renderDevices(devices) {
+  const el = document.getElementById('device-list');
+  document.getElementById('device-count').textContent = devices.length + ' thiết bị';
+  if (!devices.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:1rem;">Chưa có thiết bị nào</div>';
+    return;
+  }
+  const now = Date.now();
+  el.innerHTML = devices.map(d => {
+    const lastSeen = d.last_seen ? new Date(d.last_seen + 'Z') : null;
+    const online = lastSeen && (now - lastSeen.getTime()) < 5 * 60 * 1000;
+    return `<div class="device-item">
+      <div class="device-dot ${online ? 'online' : 'offline'}"></div>
+      <div class="device-info">
+        <div class="device-name">${escHtml(d.name)}</div>
+        <div class="device-id">${escHtml(d.device_id)}</div>
+        <div class="device-key">Key: ${escHtml(d.api_key)}</div>
+      </div>
+      <button class="copy-btn" data-key="${escHtml(d.api_key)}" onclick="copyKey(this.dataset.key)">Copy</button>
+    </div>`;
+  }).join('');
+}
+
+function render7DayChart(days) {
+  const labels = days.map(d => {
+    const dt = new Date(d.date);
+    return dt.toLocaleDateString('vi-VN', {weekday:'short', day:'numeric'});
+  });
+  const data = days.map(d => Math.round(d.percent));
+
+  if (chart7day) chart7day.destroy();
+  chart7day = new Chart(document.getElementById('chart-7day'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '% hoàn thành',
+        data,
+        backgroundColor: days.map(d => d.achieved ? 'rgba(0,229,160,.7)' : 'rgba(0,210,200,.3)'),
+        borderColor: days.map(d => d.achieved ? '#00e5a0' : '#00d2c8'),
+        borderWidth: 1, borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#5a7a90', font: { size: 11 } } },
+        y: { min:0, max:100, grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#5a7a90', callback: v => v+'%', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderHourlyChart(hourly) {
+  const labels = hourly.map(h => h.hour + 'h');
+  const data = hourly.map(h => h.total_ml);
+
+  if (chartHourly) chartHourly.destroy();
+  chartHourly = new Chart(document.getElementById('chart-hourly'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'ml',
+        data,
+        borderColor: '#00d2c8',
+        backgroundColor: 'rgba(0,210,200,.08)',
+        borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#00d2c8',
+        fill: true, tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#5a7a90', font: { size: 10 }, maxTicksLimit: 12 } },
+        y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#5a7a90', font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderStreak(days, streakCount) {
+  const el = document.getElementById('streak-row');
+  const dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
+  el.innerHTML = days.map(d => {
+    const dt = new Date(d.date);
+    const isToday = d.date === new Date().toISOString().split('T')[0];
+    const cls = isToday ? 'today' : (d.achieved ? 'done' : '');
+    return `<div class="streak-day ${cls}" title="${d.date}: ${Math.round(d.total_ml)}ml">${dayNames[dt.getDay()]}</div>`;
+  }).join('');
+  document.getElementById('streak-label').textContent = streakCount + ' ngày 🔥';
+  const achieved = days.filter(d=>d.achieved).length;
+  document.getElementById('streak-summary').textContent = `Hoàn thành ${achieved}/${days.length} ngày trong tuần`;
+}
+
+// ── ADD DEVICE ─────────────────────────────────────────
+async function addDevice() {
+  const id = document.getElementById('new-dev-id').value.trim();
+  const name = document.getElementById('new-dev-name').value.trim();
+  if (!id) return toast('Nhập device_id', 'error');
+  const r = await apiFetch('/devices', { method: 'POST', body: JSON.stringify({ device_id: id, name: name || id }) });
+  if (!r) return;
+  if (!r.ok) { const e = await r.json(); return toast(e.detail || 'Lỗi', 'error'); }
+  document.getElementById('new-dev-id').value = '';
+  document.getElementById('new-dev-name').value = '';
+  toast('Đã thêm thiết bị!', 'success');
+  loadDashboard();
+}
+
+// ── COPY KEY ──────────────────────────────────────────
+function copyKey(key) {
+  navigator.clipboard.writeText(key).then(() => toast('Đã copy API key!', 'success'));
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type==='success'?'✓ ':'✗ ') + msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.className = 'toast', 3000);
+}
+
+// ── LOGOUT ────────────────────────────────────────────
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = '/app';
+}
+
+// ── VIDEO WIDGET ───────────────────────────────────────
+function hideVideoWidget() {
+  document.getElementById('video-widget').classList.add('hidden');
+  document.getElementById('video-toggle').classList.add('visible');
+}
+function showVideoWidget() {
+  document.getElementById('video-widget').classList.remove('hidden');
+  document.getElementById('video-toggle').classList.remove('visible');
+}
+
+// ── PROFILE MODAL ─────────────────────────────────────
+async function openProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  modal.classList.add('open');
+  const r = await apiFetch('/me/profile');
+  if (!r) return;
+  const u = await r.json();
+  document.getElementById('modal-email').textContent = u.email;
+  document.getElementById('pf-name').value = u.full_name || '';
+  document.getElementById('pf-gender').value = u.gender || 'male';
+  document.getElementById('pf-weight').value = u.weight_kg || '';
+  document.getElementById('pf-height').value = u.height_cm || '';
+}
+
+function closeModal() {
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function saveProfile() {
+  const body = {
+    full_name: document.getElementById('pf-name').value.trim(),
+    gender: document.getElementById('pf-gender').value,
+    weight_kg: parseFloat(document.getElementById('pf-weight').value) || null,
+    height_cm: parseFloat(document.getElementById('pf-height').value) || null,
+  };
+  const r = await apiFetch('/me/profile', { method: 'PATCH', body: JSON.stringify(body) });
+  if (!r) return;
+  if (!r.ok) { const e = await r.json(); return toast(e.detail || 'Lỗi lưu hồ sơ', 'error'); }
+  toast('Đã lưu hồ sơ!', 'success');
+  closeModal();
+  loadProfile();
+}
+
+document.getElementById('profile-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── EXPORT CSV ────────────────────────────────────────
+async function exportCSV() {
+  const r = await apiFetch('/me/water/export?days=30');
+  if (!r || !r.ok) return toast('Lỗi export CSV', 'error');
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'water_history_30d.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Đã tải file CSV!', 'success');
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────
+let notifOpen = false;
+
+function toggleNotifDropdown() {
+  notifOpen = !notifOpen;
+  document.getElementById('notif-dropdown').classList.toggle('open', notifOpen);
+  if (notifOpen) loadNotifications();
+}
+
+async function loadNotifications() {
+  const r = await apiFetch('/me/notifications');
+  if (!r) return;
+  const notifs = await r.json();
+  const unread = notifs.filter(n => !n.is_read).length;
+  const badge = document.getElementById('notif-count');
+  badge.textContent = unread;
+  badge.style.display = unread > 0 ? 'flex' : 'none';
+  const list = document.getElementById('notif-list');
+  if (!notifs.length) {
+    list.innerHTML = '<div class="notif-empty">Không có thông báo</div>';
+    return;
+  }
+  list.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="markRead(${n.id}, this)">
+      <div class="notif-msg">${n.message}</div>
+      <div class="notif-time">${new Date(n.created_at + 'Z').toLocaleString('vi-VN')}</div>
+    </div>`).join('');
+}
+
+async function markRead(id, el) {
+  el.classList.remove('unread');
+  await apiFetch(`/me/notifications/${id}/read`, { method: 'POST' });
+  loadNotifications();
+}
+
+async function markAllRead() {
+  await apiFetch('/me/notifications/read-all', { method: 'POST' });
+  loadNotifications();
+}
+
+document.addEventListener('click', function(e) {
+  if (notifOpen && !e.target.closest('.notif-wrap')) {
+    notifOpen = false;
+    document.getElementById('notif-dropdown').classList.remove('open');
+  }
+});
+
+// ── DAILY REMINDER ────────────────────────────────────
+function checkDailyReminder(pct) {
+  if (Notification.permission !== 'granted') return;
+  const hour = new Date().getHours();
+  const key = 'reminded_' + new Date().toDateString();
+  if (hour >= 20 && pct < 80 && !localStorage.getItem(key)) {
+    new Notification('Doctor.X — Nhắc uống nước 💧', {
+      body: `Hôm nay mới uống ${pct}% mục tiêu. Uống thêm nhé!`,
+    });
+    localStorage.setItem(key, '1');
+  }
+}
+
+// ── CAMERA (WebSocket relay) ───────────────────────────
+let _camWs = null;
+function connectCam() {
+  if (_camWs) _camWs.close();
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  _camWs = new WebSocket(`${proto}://${location.host}/ws/cam?token=${encodeURIComponent(token || '')}`);
+  _camWs.binaryType = 'blob';
+  const status = document.getElementById('cam-status');
+  const img = document.getElementById('cam-feed');
+  _camWs.onopen = () => {
+    _camWs.send('viewer');
+    status.style.display = '';
+    status.innerHTML = `Mở Safari trên điện thoại → vào <strong>${location.origin}/cam?t=${encodeURIComponent(token || '')}</strong>`;
+  };
+  _camWs.onmessage = (e) => {
+    if (e.data instanceof Blob) {
+      const old = img.src;
+      img.src = URL.createObjectURL(e.data);
+      if (old.startsWith('blob:')) URL.revokeObjectURL(old);
+      status.style.display = 'none';
+    }
+  };
+  _camWs.onclose = () => { status.textContent = 'Camera ngắt kết nối.'; status.style.display = ''; };
+}
+function disconnectCam() {
+  if (_camWs) { _camWs.close(); _camWs = null; }
+  const img = document.getElementById('cam-feed');
+  if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.src = '';
+  const s = document.getElementById('cam-status');
+  s.textContent = 'Nhấn "Bật Camera" để bắt đầu.';
+  s.style.display = '';
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────
+function connectWS() {
+  const wsUrl = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/dashboard?token=${token}`;
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    document.getElementById('ws-dot').className = 'ws-dot live';
+    document.getElementById('ws-label').textContent = 'Real-time';
+  };
+
+  ws.onmessage = e => {
+    if (e.data === 'ping') { ws.send('pong'); return; }
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'init' || msg.type === 'telemetry_update') {
+        updateWaterStats(msg.data);
+        updatePlant(msg.data);
+      }
+    } catch {}
+  };
+
+  ws.onclose = () => {
+    document.getElementById('ws-dot').className = 'ws-dot';
+    document.getElementById('ws-label').textContent = 'Mất kết nối';
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+// ── BOOTSTRAP ─────────────────────────────────────────
+(async () => {
+  if (Notification.permission === 'default') Notification.requestPermission();
+  await loadProfile();
+  await loadDashboard();
+  loadNotifications();
+  connectWS();
+  setInterval(loadDashboard, 5 * 60 * 1000);
+  setInterval(loadNotifications, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

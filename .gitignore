@@ -1,0 +1,24 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite3
+.DS_Store
+*.egg-info/
+dist/
+build/
+.idea/
+.vscode/
+*.log
+certs_https/
+mosquitto_data/data/
+ngrok.exe
+ngrok
+
+# ESP32 secrets — dùng config.h.example làm mẫu
+firmware/config.h
+
+# Claude Code local settings
+.claude/

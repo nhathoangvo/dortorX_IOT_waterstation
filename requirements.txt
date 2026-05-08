@@ -1,0 +1,26 @@
+# ── Doctor.X IoT Platform — Dependencies ────────────────────────
+# Core
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Auth & Security
+pydantic[email]>=2.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.1
+python-multipart>=0.0.9
+slowapi>=0.1.1
+
+# Config & Utils
+python-dotenv>=1.0.0
+email-validator>=2.1.0
+requests>=2.31.0
+
+# MQTT
+paho-mqtt>=2.0.0
+
+# Templates (optional)
+jinja2>=3.1.0

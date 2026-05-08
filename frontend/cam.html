@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doctor.X Camera</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; display: flex; flex-direction: column; align-items: center;
+           justify-content: center; min-height: 100vh; font-family: sans-serif; color: #fff; }
+    video { width: 100%; max-width: 480px; border-radius: 10px; background: #111; }
+    #status { margin-top: 1rem; font-size: 1rem; text-align: center; padding: 0 1rem; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+           background: #4caf50; margin-right: 6px; animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  </style>
+</head>
+<body>
+  <video id="v" autoplay muted playsinline></video>
+  <p id="status">Đang khởi động...</p>
+  <script>
+    const status = document.getElementById('status');
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const camToken = new URLSearchParams(location.search).get('t') || localStorage.getItem('token') || '';
+    const ws = new WebSocket(`${proto}://${location.host}/ws/cam?token=${encodeURIComponent(camToken)}`);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = () => {
+      ws.send('source');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = '❌ Safari yêu cầu HTTPS để dùng camera. Mở link https:// thay vì http://';
+        return;
+      }
+      status.textContent = 'Đang mở camera...';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(stream => {
+          const video = document.getElementById('v');
+          video.srcObject = stream;
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          video.onloadedmetadata = () => {
+            canvas.width = 640; canvas.height = 480;
+            status.innerHTML = '<span class="dot"></span>Đang stream lên dashboard...';
+            setInterval(() => {
+              if (ws.readyState !== WebSocket.OPEN) return;
+              ctx.drawImage(video, 0, 0, 640, 480);
+              canvas.toBlob(blob => {
+                if (blob) blob.arrayBuffer().then(buf => ws.send(buf));
+              }, 'image/jpeg', 0.6);
+            }, 100);
+          };
+        })
+        .catch(e => { status.textContent = 'Lỗi camera: ' + e.message; });
+    };
+    ws.onclose = () => { status.textContent = 'Mất kết nối. Tải lại trang.'; };
+  </script>
+</body>
+</html>

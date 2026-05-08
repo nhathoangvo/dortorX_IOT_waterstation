@@ -1,0 +1,19 @@
+// ── Doctor.X ESP32 — Cấu hình mẫu ───────────────────────────────
+// Sao chép file này thành config.h và điền thông tin thực của bạn
+// KHÔNG commit config.h lên GitHub
+
+#pragma once
+
+// WiFi của bạn
+#define WIFI_SSID      "Ten_WiFi_cua_ban"
+#define WIFI_PASSWORD  "Mat_khau_WiFi"
+
+// IP máy tính đang chạy uvicorn (xem bằng ipconfig trên Windows)
+#define SERVER_URL     "http://192.168.x.x:8000/ingest/telemetry"
+
+// Lấy device_id và api_key từ Dashboard → tab Devices
+#define DEVICE_ID      "water_station"
+#define API_KEY        "your_64_char_api_key_here"
+
+// ml mỗi lần nhấn nút
+#define ML_PER_PRESS   250
