@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from sqlalchemy import text
 from app.db import engine
 from app.models import Base
 from app.limiter import limiter
@@ -46,6 +47,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    with engine.connect() as conn:
+        conn.execute(text(
+            "ALTER TABLE firmware_versions ADD COLUMN IF NOT EXISTS binary_data BYTEA"
+        ))
+        conn.commit()
     yield
 
 

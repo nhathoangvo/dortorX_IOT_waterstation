@@ -1,14 +1,18 @@
 from __future__ import annotations
 import hmac
 import logging
+import os
 from typing import List
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, File, UploadFile, Form
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.dependencies import require_admin
 from app.models import Device, FirmwareVersion, User
 from app.schemas import FirmwareCreate, FirmwareOut
+
+BASE_URL = os.getenv("SERVER_BASE_URL", "https://web-production-388fe.up.railway.app")
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/firmware", tags=["firmware"])
@@ -69,3 +73,42 @@ def list_releases(
     admin: User = Depends(require_admin),
 ):
     return db.query(FirmwareVersion).order_by(FirmwareVersion.created_at.desc()).all()
+
+
+@router.post("/upload", response_model=FirmwareOut)
+async def upload_firmware(
+    version: str = Form(...),
+    release_notes: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    if db.query(FirmwareVersion).filter(FirmwareVersion.version == version).first():
+        raise HTTPException(400, f"Version {version} already exists")
+    binary = await file.read()
+    download_url = f"{BASE_URL}/firmware/download/{version}"
+    db.query(FirmwareVersion).filter(FirmwareVersion.is_latest == True).update({"is_latest": False})
+    fw = FirmwareVersion(
+        version=version,
+        download_url=download_url,
+        release_notes=release_notes,
+        is_latest=True,
+        binary_data=binary,
+    )
+    db.add(fw)
+    db.commit()
+    db.refresh(fw)
+    logger.info("FIRMWARE_UPLOAD version=%s admin_id=%s size=%d", fw.version, admin.id, len(binary))
+    return fw
+
+
+@router.get("/download/{version}")
+def download_firmware(version: str, db: Session = Depends(get_db)):
+    fw = db.query(FirmwareVersion).filter(FirmwareVersion.version == version).first()
+    if not fw or not fw.binary_data:
+        raise HTTPException(404, "Firmware not found")
+    return Response(
+        content=fw.binary_data,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename=esp32_{version}.bin"},
+    )

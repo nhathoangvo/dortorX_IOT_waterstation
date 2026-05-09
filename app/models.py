@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text
+    Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text, LargeBinary
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON
@@ -87,3 +87,4 @@ class FirmwareVersion(Base):
     release_notes = Column(String, default="")
     is_latest    = Column(Boolean, default=False, index=True)
     created_at   = Column(DateTime, default=datetime.utcnow)
+    binary_data  = Column(LargeBinary, nullable=True)
