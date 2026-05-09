@@ -1250,10 +1250,15 @@ function connectWS() {
     if (e.data === 'ping') { ws.send('pong'); return; }
     try {
       const msg = JSON.parse(e.data);
-      if (msg.type === 'init' || msg.type === 'telemetry_update') {
+      if (msg.type === 'init') {
         updateWaterStats(msg.data);
         updatePlant(msg.data);
         if (msg.env) updateEnv(msg.env);
+      } else if (msg.type === 'telemetry_update') {
+        updateWaterStats(msg.data);
+        updatePlant(msg.data);
+        if (msg.env) updateEnv(msg.env);
+        loadDashboard();  // refresh charts (7-day + hourly)
       }
     } catch {}
   };
