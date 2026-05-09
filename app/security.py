@@ -1,20 +1,19 @@
 from __future__ import annotations
-import os, secrets, smtplib
+import os, secrets
 from datetime import datetime, timedelta
-from email.message import EmailMessage
 from typing import Optional
 import bcrypt
+import resend
 from jose import jwt
 from sqlalchemy.orm import Session
 
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_hex(32))
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "")
-SMTP_PASS = os.getenv("SMTP_PASS", "")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8000")
+
+resend.api_key = RESEND_API_KEY
 
 
 def get_password_hash(password: str) -> str:
@@ -80,15 +79,13 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def send_password_reset_email(email: str, token: str) -> None:
-    if not SMTP_USER:
-        print(f"[DEV] Reset link: {FRONTEND_URL}/reset-password?token={token}")
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+    if not RESEND_API_KEY:
+        print(f"[DEV] Reset link: {reset_link}")
         return
-    msg = EmailMessage()
-    msg["Subject"] = "Doctor.X — Đặt lại mật khẩu"
-    msg["From"] = SMTP_USER
-    msg["To"] = email
-    msg.set_content(f"Link đặt lại mật khẩu (hết hạn 30 phút):\n\n{FRONTEND_URL}/reset-password?token={token}")
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-        s.starttls()
-        s.login(SMTP_USER, SMTP_PASS)
-        s.send_message(msg)
+    resend.Emails.send({
+        "from": "Doctor.X <onboarding@resend.dev>",
+        "to": [email],
+        "subject": "Doctor.X — Đặt lại mật khẩu",
+        "text": f"Link đặt lại mật khẩu (hết hạn 30 phút):\n\n{reset_link}",
+    })
