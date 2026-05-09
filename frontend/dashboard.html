@@ -787,10 +787,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 
-  <!-- NHIỆT ĐỘ & ĐỘ ẨM -->
+  <!-- THỜI TIẾT -->
   <div class="card env-card">
     <div class="cam-header">
-      <span>🌡️ Môi trường</span>
+      <span>🌤️ Thời tiết — <span id="weather-city">Hồ Chí Minh</span></span>
       <span id="env-ts" style="font-size:.75rem;color:var(--muted)">—</span>
     </div>
     <div class="env-grid">
@@ -798,7 +798,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="env-icon">🌡️</div>
         <div class="env-label">Nhiệt độ</div>
         <div class="env-value" id="env-temp">—</div>
-        <div class="env-unit">°C</div>
+        <div class="env-unit">°C · Cảm giác <span id="env-feels">—</span>°C</div>
       </div>
       <div class="env-item">
         <div class="env-icon">💧</div>
@@ -807,6 +807,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="env-unit">%</div>
       </div>
     </div>
+    <div style="text-align:center;margin-top:.8rem;font-size:.85rem;color:var(--muted);text-transform:capitalize" id="weather-desc">—</div>
   </div>
 
   <!-- CAMERA LIVE (WebSocket relay) -->
@@ -1183,20 +1184,20 @@ function checkDailyReminder(pct) {
   }
 }
 
-// ── ENV (Nhiệt độ / Độ ẩm) ────────────────────────────
-function updateEnv(env) {
-  if (env.temperature_c != null) document.getElementById('env-temp').textContent = env.temperature_c.toFixed(1);
-  if (env.humidity_pct  != null) document.getElementById('env-hum').textContent  = Math.round(env.humidity_pct);
-  if (env.ts) {
-    const d = new Date(env.ts + 'Z');
-    document.getElementById('env-ts').textContent = 'Cập nhật: ' + d.toLocaleTimeString('vi-VN');
-  }
+// ── WEATHER ────────────────────────────────────────────
+function updateWeather(w) {
+  if (w.temperature_c != null) document.getElementById('env-temp').textContent = w.temperature_c.toFixed(1);
+  if (w.feels_like_c  != null) document.getElementById('env-feels').textContent = w.feels_like_c.toFixed(1);
+  if (w.humidity_pct  != null) document.getElementById('env-hum').textContent  = w.humidity_pct;
+  if (w.description)           document.getElementById('weather-desc').textContent = w.description;
+  if (w.city)                  document.getElementById('weather-city').textContent = w.city;
+  document.getElementById('env-ts').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
 }
 
 async function loadEnv() {
   try {
-    const r = await fetch('/me/water/env', { headers: { Authorization: 'Bearer ' + token } });
-    if (r.ok) updateEnv(await r.json());
+    const r = await fetch('/weather');
+    if (r.ok) updateWeather(await r.json());
   } catch {}
 }
 
@@ -1276,6 +1277,7 @@ function connectWS() {
   connectWS();
   setInterval(loadDashboard, 5 * 60 * 1000);
   setInterval(loadNotifications, 5 * 60 * 1000);
+  setInterval(loadEnv, 10 * 60 * 1000);
 })();
 </script>
 </body>

@@ -18,6 +18,7 @@ from app.limiter import limiter
 
 # ── import routers ──────────────────────────────────────
 from app.routers import auth, devices, ingest, water, ws, admin, notifications, firmware
+from app.routers.weather_api import router as weather_router
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -80,6 +81,7 @@ app.include_router(ws.router)
 app.include_router(admin.router)
 app.include_router(notifications.router)
 app.include_router(firmware.router)
+app.include_router(weather_router)
 
 # ── Static files ─────────────────────────────────────────
 if FRONTEND_DIR.exists():
