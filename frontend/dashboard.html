@@ -111,6 +111,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge-live{background:rgba(0,229,160,.12);color:var(--a3);border:1px solid rgba(0,229,160,.2);}
 .badge-info{background:rgba(0,210,200,.1);color:var(--accent);border:1px solid rgba(0,210,200,.2);}
 
+/* ── ENV CARD ── */
+.env-card{margin-top:1.5rem;padding:1.2rem;}
+.env-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.8rem;}
+.env-item{background:rgba(0,210,200,.06);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;}
+.env-icon{font-size:1.8rem;margin-bottom:.3rem;}
+.env-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.env-value{font-size:1.6rem;font-family:'Syne',sans-serif;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:.1rem 0;}
+.env-unit{font-size:.78rem;color:var(--muted);}
+
 /* ── CAMERA CARD ── */
 .cam-card{margin-top:1.5rem;padding:1.2rem;}
 .cam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
@@ -778,6 +787,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 
+  <!-- NHIỆT ĐỘ & ĐỘ ẨM -->
+  <div class="card env-card">
+    <div class="cam-header">
+      <span>🌡️ Môi trường</span>
+      <span id="env-ts" style="font-size:.75rem;color:var(--muted)">—</span>
+    </div>
+    <div class="env-grid">
+      <div class="env-item">
+        <div class="env-icon">🌡️</div>
+        <div class="env-label">Nhiệt độ</div>
+        <div class="env-value" id="env-temp">—</div>
+        <div class="env-unit">°C</div>
+      </div>
+      <div class="env-item">
+        <div class="env-icon">💧</div>
+        <div class="env-label">Độ ẩm</div>
+        <div class="env-value" id="env-hum">—</div>
+        <div class="env-unit">%</div>
+      </div>
+    </div>
+  </div>
+
   <!-- CAMERA LIVE (WebSocket relay) -->
   <div class="card cam-card">
     <div class="cam-header">
@@ -1152,6 +1183,23 @@ function checkDailyReminder(pct) {
   }
 }
 
+// ── ENV (Nhiệt độ / Độ ẩm) ────────────────────────────
+function updateEnv(env) {
+  if (env.temperature_c != null) document.getElementById('env-temp').textContent = env.temperature_c.toFixed(1);
+  if (env.humidity_pct  != null) document.getElementById('env-hum').textContent  = Math.round(env.humidity_pct);
+  if (env.ts) {
+    const d = new Date(env.ts + 'Z');
+    document.getElementById('env-ts').textContent = 'Cập nhật: ' + d.toLocaleTimeString('vi-VN');
+  }
+}
+
+async function loadEnv() {
+  try {
+    const r = await fetch('/me/water/env', { headers: { Authorization: 'Bearer ' + token } });
+    if (r.ok) updateEnv(await r.json());
+  } catch {}
+}
+
 // ── CAMERA (WebSocket relay) ───────────────────────────
 let _camWs = null;
 function connectCam() {
@@ -1204,6 +1252,7 @@ function connectWS() {
       if (msg.type === 'init' || msg.type === 'telemetry_update') {
         updateWaterStats(msg.data);
         updatePlant(msg.data);
+        if (msg.env) updateEnv(msg.env);
       }
     } catch {}
   };
@@ -1223,6 +1272,7 @@ function connectWS() {
   await loadProfile();
   await loadDashboard();
   loadNotifications();
+  loadEnv();
   connectWS();
   setInterval(loadDashboard, 5 * 60 * 1000);
   setInterval(loadNotifications, 5 * 60 * 1000);

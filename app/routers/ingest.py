@@ -16,14 +16,27 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 async def _push_update(device: Device, db: Session):
     try:
-        from app.models import User
+        from app.models import User, Telemetry
+        from app.services import water as water_svc2
         user = db.query(User).filter(User.id == device.owner_id).first()
         if not user:
             return
         summary = water_svc.get_today_summary(db, user)
+
+        device_ids = water_svc2.get_device_ids(db, user)
+        def _latest_val(metric: str):
+            row = (db.query(Telemetry)
+                   .filter(Telemetry.device_id.in_(device_ids), Telemetry.metric_type == metric)
+                   .order_by(Telemetry.ts.desc()).first())
+            return row.value if row else None
+
         await manager.broadcast_to_user(device.owner_id, {
             "type": "telemetry_update",
             "data": summary.model_dump(),
+            "env": {
+                "temperature_c": _latest_val("temperature_c"),
+                "humidity_pct":  _latest_val("humidity_pct"),
+            },
         })
     except Exception as e:
         print("WS push error:", e)

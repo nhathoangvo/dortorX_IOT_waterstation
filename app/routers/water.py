@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import User
+from app.models import User, Telemetry
 from app.schemas import WaterSummaryOut, WaterHistoryOut, DashboardOut, UserOut, UserUpdate
 from app.services import water as svc
 from app.dependencies import get_current_user
@@ -57,6 +57,36 @@ def export_water_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@router.get("/water/env")
+def latest_env(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    device_ids = svc.get_device_ids(db, user)
+    if not device_ids:
+        return {"temperature_c": None, "humidity_pct": None, "ts": None}
+
+    def _latest(metric: str):
+        row = (
+            db.query(Telemetry)
+            .filter(Telemetry.device_id.in_(device_ids), Telemetry.metric_type == metric)
+            .order_by(Telemetry.ts.desc())
+            .first()
+        )
+        return row.value if row else None
+
+    temp = _latest("temperature_c")
+    hum  = _latest("humidity_pct")
+    ts_row = (
+        db.query(Telemetry)
+        .filter(Telemetry.device_id.in_(device_ids), Telemetry.metric_type == "temperature_c")
+        .order_by(Telemetry.ts.desc())
+        .first()
+    )
+    return {
+        "temperature_c": temp,
+        "humidity_pct": hum,
+        "ts": ts_row.ts.isoformat() if ts_row else None,
+    }
 
 
 @router.get("/water/dashboard", response_model=DashboardOut)
