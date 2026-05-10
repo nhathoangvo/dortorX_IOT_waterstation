@@ -20,6 +20,7 @@ from app.limiter import limiter
 # ── import routers ──────────────────────────────────────
 from app.routers import auth, devices, ingest, water, ws, admin, notifications, firmware
 from app.routers.weather_api import router as weather_router
+from app.routers.reminder import start_scheduler, stop_scheduler
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -52,7 +53,9 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE firmware_versions ADD COLUMN IF NOT EXISTS binary_data BYTEA"
         ))
         conn.commit()
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 app = FastAPI(
